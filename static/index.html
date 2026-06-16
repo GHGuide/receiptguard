@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ReceiptGuard — the agent that can't lie about its tools</title>
+<style>
+  :root { --bg:#0b0f17; --panel:#131a26; --line:#243044; --txt:#e6edf6; --mut:#8b9bb4;
+          --red:#ef4444; --green:#22c55e; --amber:#f59e0b; --blue:#3b82f6; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.5 ui-sans-serif,system-ui,Segoe UI,Roboto,Arial; }
+  header { padding:22px 28px; border-bottom:1px solid var(--line); }
+  h1 { margin:0; font-size:20px; } h1 span { color:var(--blue); }
+  .sub { color:var(--mut); margin-top:4px; font-size:13px; }
+  .bar { padding:16px 28px; display:flex; gap:12px; align-items:center; border-bottom:1px solid var(--line); }
+  select,button { background:var(--panel); color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:9px 14px; font-size:14px; }
+  button { background:var(--blue); border-color:var(--blue); font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:wait; }
+  .mode { margin-left:auto; color:var(--mut); font-size:12px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; padding:22px 28px; }
+  .col { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  .col h2 { margin:0 0 4px; font-size:15px; } .col .tag { font-size:12px; color:var(--mut); margin-bottom:14px; }
+  .draft { background:#0d1320; border:1px solid var(--line); border-radius:8px; padding:12px; min-height:64px; white-space:pre-wrap; }
+  .claims { margin-top:14px; display:flex; flex-direction:column; gap:7px; }
+  .claim { display:flex; gap:9px; align-items:flex-start; padding:8px 10px; border-radius:7px; border:1px solid var(--line); }
+  .claim .dot { width:9px; height:9px; border-radius:50%; margin-top:6px; flex:none; }
+  .ok .dot{background:var(--green)} .bad .dot{background:var(--red)} .neu .dot{background:var(--mut)}
+  .bad { border-color:#5b1d1d; background:#1a0f0f; } .ok { border-color:#16351f; }
+  .st { font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:var(--mut); }
+  .reason { margin-top:14px; border-left:3px solid var(--blue); padding:8px 12px; background:#0d1320; border-radius:0 8px 8px 0; font-size:13px; color:#cdd9ea; }
+  .reason b{color:var(--blue)}
+  .foot { padding:0 28px 28px; }
+  .rcpts,.audit { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; margin-top:16px; font:12px ui-monospace,Menlo,monospace; color:var(--mut); }
+  .rcpts b,.audit b{color:var(--txt); font-family:ui-sans-serif} .chain-ok{color:var(--green)} .chain-bad{color:var(--red)}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+  .badge.block{background:#3a1414;color:#fca5a5}.badge.ship{background:#0f2e1a;color:#86efac}
+</style>
+</head>
+<body>
+<header>
+  <h1>Receipt<span>Guard</span> — the agent that can't lie about what its tools did</h1>
+  <div class="sub">Track 4 · Qwen Cloud Hackathon · every tool-derived claim must show a signed receipt or get blocked &amp; regenerated</div>
+</header>
+<div class="bar">
+  <select id="scenario"></select>
+  <button id="run">▶ Run autopilot</button>
+  <span class="mode" id="mode">…</span>
+</div>
+
+<div class="grid">
+  <div class="col">
+    <h2>① Baseline agent <span class="badge block" id="b-badge">unguarded</span></h2>
+    <div class="tag">what ships with no verification</div>
+    <div class="draft" id="b-draft">—</div>
+    <div class="claims" id="b-claims"></div>
+  </div>
+  <div class="col">
+    <h2>② ReceiptGuard <span class="badge ship" id="g-badge">verified</span></h2>
+    <div class="tag">claims cross-checked against signed tool receipts</div>
+    <div class="draft" id="g-draft">—</div>
+    <div class="claims" id="g-claims"></div>
+    <div class="reason" id="g-reason" style="display:none"></div>
+  </div>
+</div>
+<div class="foot">
+  <div class="rcpts" id="rcpts">receipts —</div>
+  <div class="audit" id="audit">audit —</div>
+</div>
+
+<script>
+const STATUS_OK = new Set(["backed","opinion","inference"]);
+async function init(){
+  const r = await fetch('/health').then(x=>x.json());
+  document.getElementById('mode').textContent = (r.mock?'MOCK mode (offline)':'LIVE · '+r.models.agent);
+  const s = await fetch('/scenarios').then(x=>x.json());
+  const sel = document.getElementById('scenario');
+  for(const [k,v] of Object.entries(s.scenarios)){ const o=document.createElement('option'); o.value=k; o.textContent=v; sel.appendChild(o); }
+}
+function claimEl(v){
+  const ok = STATUS_OK.has(v.status);
+  const cls = v.status==='backed'?'ok':(ok?'neu':'bad');
+  const el = document.createElement('div'); el.className='claim '+cls;
+  el.innerHTML = `<span class="dot"></span><div><div>${v.text}</div>
+    <div class="st">${v.status}${v.receipt_id?(' · '+v.receipt_id):''} — ${v.reason}</div></div>`;
+  return el;
+}
+function render(box, verdicts){ box.innerHTML=''; verdicts.forEach(v=>box.appendChild(claimEl(v))); }
+async function run(){
+  const btn=document.getElementById('run'); btn.disabled=true; btn.textContent='running…';
+  const scenario=document.getElementById('scenario').value;
+  const r = await fetch('/run',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({scenario})}).then(x=>x.json());
+  document.getElementById('b-draft').textContent = r.baseline.draft;
+  render(document.getElementById('b-claims'), r.baseline.verdicts);
+  document.getElementById('b-badge').textContent = r.baseline.failed+' fabricated';
+  const last = r.guarded.iterations[r.guarded.iterations.length-1];
+  document.getElementById('g-draft').textContent = r.guarded.final_draft;
+  render(document.getElementById('g-claims'), last.verdicts);
+  document.getElementById('g-badge').textContent = r.guarded.shipped?('shipped · grounding '+r.guarded.score):'blocked';
+  const firstReason = r.guarded.iterations.find(i=>i.reasoning);
+  const rn = document.getElementById('g-reason');
+  if(firstReason){ rn.style.display='block'; rn.innerHTML='<b>qwen3-max reasoning:</b> '+firstReason.reasoning; } else rn.style.display='none';
+  document.getElementById('rcpts').innerHTML = '<b>signed receipts ('+r.receipts.length+'):</b> '+r.receipts.map(x=>x.tool+' ['+x.receipt_id+']').join('  ·  ');
+  document.getElementById('audit').innerHTML = '<b>hash-chained audit:</b> '+r.audit.map(e=>e.kind+' '+e.hash+'…').join(' → ')+
+     '  —  chain <span class="'+(r.chain_ok?'chain-ok':'chain-bad')+'">'+(r.chain_ok?'VERIFIED ✓':'BROKEN ✗')+'</span>';
+  btn.disabled=false; btn.textContent='▶ Run autopilot';
+}
+document.getElementById('run').addEventListener('click', run);
+init();
+</script>
+</body>
+</html>
