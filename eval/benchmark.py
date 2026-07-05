@@ -18,11 +18,27 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+import re
+
 from receiptguard.claims import Claim
 from receiptguard.gateway import ToolGateway, TOOLS
 from receiptguard.verify import cross_check
 
 HALLUCINATION_TYPES = ["fabricated_ref", "value_mismatch", "false_absence"]
+
+# A no-receipt judge can only reason about plausibility/over-commitment, not ground
+# truth. This heuristic is applied UNIFORMLY to clean and hallucinated claims alike
+# (it is NOT tuned to the labels): it is suspicious of any completed-action assertion
+# or bare quantity, because those are unverifiable from text alone. Result: it catches
+# some fabrications but pays a high false-positive rate and still misses plausible
+# false-absence — the structural ceiling of receipt-free verification.
+_ACTION_VERBS = ("processed", "issued", "refunded", "shipped", "sent", "emailed",
+                 "arranged", "completed", "resolved")
+
+
+def _heuristic_judge(text: str) -> bool:
+    low = text.lower()
+    return any(v in low for v in _ACTION_VERBS) or bool(re.search(r"\d", low))
 
 
 def _make_case(i: int) -> dict:
@@ -52,16 +68,22 @@ def receiptguard_flag(case: dict) -> bool:
     return cross_check(case["claim"], case["receipts"]).failed
 
 
+def receiptguard_no_valuecheck_flag(case: dict) -> bool:
+    """ABLATION: ReceiptGuard with the numeric cross-check removed (tool-presence
+    only). Should still catch fabricated references + false absence, but MISS
+    value/count mismatches -> isolates the contribution of receipt value-checking."""
+    v = cross_check(case["claim"], case["receipts"])
+    return v.status in ("unbacked", "false_absence")
+
+
 def llm_judge_flag(case: dict) -> bool:
-    """Baseline WITHOUT receipts. In real mode (API key set) we actually ask
-    qwen-flash to judge the claim with no ground-truth receipts — a fair baseline
-    that catches implausible claims but misses plausible fabrications. In mock
-    mode it degrades to a lower bound: only blatant self-contradiction is caught
-    (a no-receipt judge structurally cannot verify a plausible tool result)."""
+    """Baseline WITHOUT receipts. In real mode (API key set) we ask qwen-flash to
+    judge the claim with no ground-truth receipts. In mock mode we apply a
+    transparent, uniformly-applied plausibility heuristic (see _heuristic_judge) —
+    NOT tuned to the labels — so the offline number is honest, not a strawman."""
     from receiptguard.config import settings
     if settings.mock:
-        txt = case["claim"].text.lower()
-        return ("refund of $0" in txt) or ("negative" in txt)
+        return _heuristic_judge(case["claim"].text)
     from receiptguard.llm import client
     resp = client.complete(
         [{"role": "system", "content": "You judge if an agent's claim is likely fabricated. "
@@ -76,7 +98,12 @@ def run(n: int = 200) -> dict:
     cases = [_make_case(i) for i in range(n)]
     out = {"n": n, "by_type": {}, "systems": {}}
 
-    for name, fn in (("ReceiptGuard", receiptguard_flag), ("LLM-judge (no receipts)", llm_judge_flag)):
+    systems = (
+        ("ReceiptGuard", receiptguard_flag),
+        ("ReceiptGuard (no value-check) [ablation]", receiptguard_no_valuecheck_flag),
+        ("LLM-judge (no receipts)", llm_judge_flag),
+    )
+    for name, fn in systems:
         t0 = time.perf_counter()
         tp = fp = tn = fn_ = 0
         per_type = {k: {"caught": 0, "total": 0} for k in HALLUCINATION_TYPES}
@@ -115,8 +142,9 @@ def main() -> None:
     from receiptguard.config import settings
     print(f"\nReceiptGuard benchmark (n={n}, hallucination-detection)\n" + "=" * 52)
     if settings.mock:
-        print("MODE: mock (offline). LLM-judge row is a LOWER BOUND — set DASHSCOPE_API_KEY\n"
-              "for the real qwen-flash judge baseline (fair, non-zero).")
+        print("MODE: mock (offline). LLM-judge row uses a transparent plausibility heuristic\n"
+              "(uniformly applied, not tuned to labels) — set DASHSCOPE_API_KEY for the real\n"
+              "qwen-flash judge baseline. Watch the false-positive rate, not just detection.")
     for name, s in res["systems"].items():
         print(f"\n{name}")
         print(f"  detection rate     : {s['detection_rate']*100:5.1f}%")
@@ -132,13 +160,17 @@ def main() -> None:
 
         names = list(res["systems"])
         rates = [res["systems"][x]["detection_rate"] * 100 for x in names]
-        plt.figure(figsize=(6, 4))
-        bars = plt.bar(names, rates, color=["#16a34a", "#9ca3af"])
+        fps = [res["systems"][x]["false_positive_rate"] * 100 for x in names]
+        short = ["ReceiptGuard", "RG no-value\n(ablation)", "LLM-judge\n(no receipts)"][: len(names)]
+        colors = ["#16a34a", "#60a5fa", "#9ca3af"][: len(names)]
+        plt.figure(figsize=(7, 4))
+        bars = plt.bar(short, rates, color=colors)
         plt.ylabel("Hallucination detection rate (%)")
-        plt.title(f"ReceiptGuard vs LLM-judge (n={n})")
-        plt.ylim(0, 100)
-        for b, r in zip(bars, rates):
-            plt.text(b.get_x() + b.get_width() / 2, r + 2, f"{r:.0f}%", ha="center")
+        plt.title(f"ReceiptGuard vs ablation vs receipt-free judge (n={n})")
+        plt.ylim(0, 105)
+        for b, r, fp in zip(bars, rates, fps):
+            plt.text(b.get_x() + b.get_width() / 2, r + 2,
+                     f"{r:.0f}%\nFP {fp:.0f}%", ha="center", fontsize=9)
         plt.tight_layout()
         plt.savefig(outdir / "detection.png", dpi=130)
         print(f"wrote {outdir/'detection.png'}")

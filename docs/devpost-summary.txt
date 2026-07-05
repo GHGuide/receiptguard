@@ -1,0 +1,47 @@
+ReceiptGuard — an autopilot agent that can't lie about what its tools did
+Track 4: Autopilot Agent · Global AI Hackathon Series with Qwen Cloud
+
+WHAT IT IS
+ReceiptGuard is a qwen3-max autopilot agent that resolves customer-support tickets
+end-to-end (refunds, warranty replacements) with a verification layer that makes
+fabricated tool results structurally impossible. The #1 blocker to deploying
+autonomous agents is confident fabrication — "I issued the refund", "8 units in
+stock, I shipped it" — when the tool was never called or returned something else.
+Everyone checks whether an agent retrieved the right fact; nobody checks what it
+claims its tools actually did. ReceiptGuard closes that retrieve-to-action gap.
+
+HOW IT WORKS
+1. Every tool call routes through a gateway that returns an unforgeable HMAC-signed
+   receipt. The agent never sees the secret, so it cannot fabricate one.
+2. qwen-flash splits the agent's answer into atomic claims, each typed by epistemic
+   source (tool-derived / inference / absence / opinion) — NabaOS pramana taxonomy.
+3. Each tool-derived claim is cross-checked against the receipt ledger: no receipt =
+   unbacked, wrong value = contradicted, "nothing found" over results = false-absence.
+4. Tiered recovery (GSAR): a groundedness score drives proceed / regenerate / replan
+   under a compute budget; qwen3-max thinking-mode adjudicates and its reasoning_content
+   is stored as the human-readable justification. When policy forbids auto-acting
+   (e.g. outside the refund window), the agent escalates to a human.
+5. Every decision is appended to a SHA-256 hash-chained audit ledger (tamper-evident;
+   EU AI Act Art. 12 record-keeping).
+
+WHY QWEN / ALIBABA
+- qwen3-max (tool-calling + thinking mode) is the agent and the adjudicator;
+  reasoning_content becomes an auditable "why", an artifact the OpenAI o-series doesn't expose.
+- qwen-flash is the cheap high-frequency claim typer (two-speed fleet under a thinking budget).
+- Exposed as an MCP server (custom tools) any Qwen agent can call live, hosted on
+  Alibaba Function Compute (SSE); backend uses the DashScope OpenAI-compatible API
+  (proof file: src/receiptguard/llm/qwen.py); audit ledger schema runs on RDS PostgreSQL.
+
+RESULTS (reproducible, eval/benchmark.py)
+100% hallucination detection at 0% false positives, sub-millisecond overhead. An
+ablation without numeric value-checking drops to 66.7% (proving the receipt
+value-check is load-bearing); a receipt-free judge only reaches 66.7% by flagging
+every quantitative claim (100% false positives) — the structural ceiling of
+verifying without ground truth.
+
+OPEN SOURCE: MIT. Research base: NabaOS (arXiv 2603.10060), GSAR (arXiv 2604.23366).
+Cryptographic tool-receipts are an emerging 2026 pattern (see also ZeroClaw, Fetch.ai
+AEVS) — ReceiptGuard does not claim to invent the primitive. Its contribution is the
+end-to-end deployed autopilot product: receipts + epistemic claim-typing + GSAR tiered
+recovery + auto-act/escalate-to-human policy gate + hash-chained audit + MCP server,
+benchmarked with an ablation.

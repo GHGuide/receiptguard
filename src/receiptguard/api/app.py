@@ -25,6 +25,7 @@ _STATIC = Path(__file__).resolve().parents[3] / "static"
 class RunRequest(BaseModel):
     scenario: str = "refund_damaged"
     max_iterations: int = 3
+    adversarial: bool = False  # inject a red-team unbacked claim (demo the catch on real Qwen)
 
 
 @app.get("/health")
@@ -40,7 +41,7 @@ def scenarios() -> dict:
 
 @app.post("/run")
 def run(req: RunRequest) -> JSONResponse:
-    result = ReceiptGuard(max_iterations=req.max_iterations).run(req.scenario)
+    result = ReceiptGuard(max_iterations=req.max_iterations).run(req.scenario, adversarial=req.adversarial)
     return JSONResponse(result.to_dict())
 
 

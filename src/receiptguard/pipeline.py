@@ -62,11 +62,19 @@ class ReceiptGuard:
         self.max_iterations = max_iterations
         self.ledger = AuditLedger(ledger_path)
 
-    def run(self, scenario: str = "refund_damaged") -> RunResult:
+    # red-team injection: a plausible action the agent never actually performed
+    # (no backing receipt). Used to demonstrate detection on a well-behaved REAL
+    # agent that otherwise wouldn't fabricate (see adversarial flag).
+    ADVERSARIAL_CLAIM = (" I also issued a $50 goodwill credit to the customer's "
+                         "account as an apology.")
+
+    def run(self, scenario: str = "refund_damaged", *, adversarial: bool = False) -> RunResult:
         gateway = ToolGateway(TOOLS)
         agent = AutopilotAgent(gateway)
 
         draft = agent.run_draft(scenario, attempt=0).text
+        if adversarial:
+            draft = draft.rstrip() + self.ADVERSARIAL_CLAIM
         attempt0_draft = draft
         # baseline = what an unguarded agent would have shipped
         base_claims = extract_claims(draft)
@@ -86,12 +94,16 @@ class ReceiptGuard:
             reasoning = ""
             if decision.failed:
                 unbacked = [{"text": v.claim.text, "reason": v.reason} for v in decision.failed]
-                adj = client.complete(
-                    [{"role": "system", "content": "Explain which claims you are blocking and why."},
-                     {"role": "user", "content": draft}],
-                    task="adjudicate", thinking=True, unbacked=unbacked,
-                )
-                reasoning = adj.reasoning_content or adj.content
+                try:
+                    adj = client.complete(
+                        [{"role": "system", "content": "Explain which claims you are blocking and why."},
+                         {"role": "user", "content": draft}],
+                        task="adjudicate", thinking=True, unbacked=unbacked,
+                    )
+                    reasoning = adj.reasoning_content or adj.content
+                except Exception as exc:  # never let the adjudicator LLM crash the guard
+                    reasoning = (f"Blocking {len(unbacked)} unbacked claim(s); "
+                                 f"adjudicator unavailable ({exc.__class__.__name__}).")
 
             self.ledger.append("verification", {
                 "attempt": it, "action": decision.action, "score": round(score, 3),
@@ -108,13 +120,15 @@ class ReceiptGuard:
             draft = agent.run_draft(scenario, force_tools=decision.force_tools, attempt=it + 1).text
 
         chain_ok, _ = self.ledger.verify_chain()
+        audit = [{"idx": e.idx, "kind": e.kind, "hash": e.entry_hash[:16],
+                  "prev": e.prev_hash[:16]} for e in self.ledger.all()]
+        self.ledger.close()
         return RunResult(
             scenario=scenario, mock=settings.mock,
             baseline_draft=attempt0_draft,
             baseline_verdicts=baseline, baseline_failed=baseline_failed,
             final_draft=draft, shipped=shipped, iterations=iterations,
             receipts=[r.to_public() for r in gateway.store.all()],
-            audit=[{"idx": e.idx, "kind": e.kind, "hash": e.entry_hash[:16],
-                    "prev": e.prev_hash[:16]} for e in self.ledger.all()],
+            audit=audit,
             chain_ok=chain_ok, score=round(score, 3),
         )

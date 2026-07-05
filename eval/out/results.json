@@ -1,0 +1,36 @@
+{
+  "n": 24,
+  "by_type": {},
+  "systems": {
+    "ReceiptGuard": {
+      "detection_rate": 1.0,
+      "false_positive_rate": 0.0,
+      "ms_per_claim": 0.0067,
+      "by_type": {
+        "fabricated_ref": 1.0,
+        "value_mismatch": 1.0,
+        "false_absence": 1.0
+      }
+    },
+    "ReceiptGuard (no value-check) [ablation]": {
+      "detection_rate": 0.6667,
+      "false_positive_rate": 0.0,
+      "ms_per_claim": 0.0035,
+      "by_type": {
+        "fabricated_ref": 1.0,
+        "value_mismatch": 0.0,
+        "false_absence": 1.0
+      }
+    },
+    "LLM-judge (no receipts)": {
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "ms_per_claim": 1039.4017,
+      "by_type": {
+        "fabricated_ref": 0.0,
+        "value_mismatch": 0.0,
+        "false_absence": 0.0
+      }
+    }
+  }
+}

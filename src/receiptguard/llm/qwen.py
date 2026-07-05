@@ -73,25 +73,41 @@ class QwenClient:
 
         extra_body: dict[str, Any] = {}
         if thinking:
-            # Qwen thinking mode (DashScope OpenAI-compat extension).
+            # Qwen thinking mode (DashScope OpenAI-compat extension). Stream so the
+            # separate `reasoning_content` deltas are reliably surfaced and a slow
+            # thinking turn does not hit the Function Compute request timeout.
             extra_body["enable_thinking"] = True
             extra_body["thinking_budget"] = settings.thinking_budget
 
-        resp = self._openai().chat.completions.create(
+        stream = self._openai().chat.completions.create(
             model=model,
             messages=messages,
             temperature=temperature,
+            stream=True,
+            stream_options={"include_usage": True},
             extra_body=extra_body or None,
         )
-        msg = resp.choices[0].message
-        reasoning = getattr(msg, "reasoning_content", "") or ""
+        content_parts: list[str] = []
+        reasoning_parts: list[str] = []
+        usage = None
+        for chunk in stream:
+            if getattr(chunk, "usage", None):
+                usage = chunk.usage
+            if not getattr(chunk, "choices", None):
+                continue
+            delta = chunk.choices[0].delta
+            rc = getattr(delta, "reasoning_content", None)  # thinking deltas
+            if rc:
+                reasoning_parts.append(rc)
+            if getattr(delta, "content", None):
+                content_parts.append(delta.content)
         return LLMResponse(
-            content=msg.content or "",
-            reasoning_content=reasoning,
+            content="".join(content_parts),
+            reasoning_content="".join(reasoning_parts),
             model=model,
             mock=False,
             latency_ms=(time.perf_counter() - t0) * 1000,
-            raw=resp,
+            raw=usage,
         )
 
     def chat_with_tools(self, messages: list[dict], tools: list[dict], *, model: str | None = None):

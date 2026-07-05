@@ -15,8 +15,10 @@ from .config import settings
 def _run(argv: list[str]) -> int:
     from .pipeline import ReceiptGuard
 
-    scenario = argv[0] if argv else "refund_damaged"
-    r = ReceiptGuard().run(scenario).to_dict()
+    adversarial = "--adversarial" in argv
+    pos = [a for a in argv if not a.startswith("--")]
+    scenario = pos[0] if pos else "refund_damaged"
+    r = ReceiptGuard().run(scenario, adversarial=adversarial).to_dict()
     print(f"mode: {'MOCK' if r['mock'] else 'LIVE'}   scenario: {r['scenario']}\n")
     print("BASELINE (unguarded) — would ship:")
     print("  " + r["baseline"]["draft"])

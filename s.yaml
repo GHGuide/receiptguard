@@ -1,0 +1,31 @@
+edition: 3.0.0
+name: receiptguard
+access: default
+resources:
+  api:
+    component: fc3
+    props:
+      region: ap-southeast-1
+      functionName: receiptguard-api
+      runtime: custom-container
+      port: 9000
+      cpu: 0.5
+      memorySize: 1024
+      diskSize: 512
+      timeout: 300                 # qwen3-max thinking is slow; 120 too tight
+      instanceConcurrency: 5
+      customContainerConfig:
+        image: registry-intl.ap-southeast-1.aliyuncs.com/receiptguard/api:0.1.0
+      environmentVariables:
+        DASHSCOPE_API_KEY: '${env(DASHSCOPE_API_KEY)}'
+        DASHSCOPE_BASE_URL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1'
+        RG_MODEL_AGENT: qwen3-max
+        RG_MODEL_WORKER: qwen-flash
+        RG_RECEIPT_SECRET: '${env(RG_RECEIPT_SECRET)}'
+        RG_LEDGER_PATH: /tmp/receiptguard_ledger.db   # FC: only /tmp is writable
+      triggers:
+        - triggerName: http
+          triggerType: http
+          triggerConfig:
+            authType: anonymous
+            methods: [GET, POST]

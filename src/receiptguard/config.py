@@ -38,6 +38,16 @@ class Settings:
     receipt_secret: str = os.environ.get("RG_RECEIPT_SECRET", "dev-only-insecure-secret-change-me")
     ledger_path: str = os.environ.get("RG_LEDGER_PATH", "receiptguard_ledger.db")
     thinking_budget: int = int(os.environ.get("RG_THINKING_BUDGET", "2048"))
+    agent_max_tool_steps: int = int(os.environ.get("RG_AGENT_MAX_TOOL_STEPS", "8"))
+
+    def __post_init__(self) -> None:
+        # validate without mutating (frozen): fail fast on a misconfigured live deploy
+        if self.api_key and not self.base_url.startswith("http"):
+            raise ValueError(f"DASHSCOPE_BASE_URL must be an http(s) URL, got {self.base_url!r}")
+        if self.thinking_budget <= 0:
+            raise ValueError("RG_THINKING_BUDGET must be positive")
+        if self.agent_max_tool_steps <= 0:
+            raise ValueError("RG_AGENT_MAX_TOOL_STEPS must be positive")
 
     @property
     def mock(self) -> bool:

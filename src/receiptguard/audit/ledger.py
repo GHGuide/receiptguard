@@ -74,3 +74,9 @@ class AuditLedger:
 
     def close(self) -> None:
         self.conn.close()
+
+    def __enter__(self) -> "AuditLedger":
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.close()

@@ -32,6 +32,22 @@ _ABSENCE = ("no results", "nothing found", "not found", "no record", "none found
 # status BACKED / OPINION / INFERENCE pass; UNBACKED / CONTRADICTED / FALSE_ABSENCE fail
 FAIL_STATUSES = {"unbacked", "contradicted", "false_absence"}
 
+# numeric match tolerance: absolute floor + relative band so $410.00 vs 410 matches
+# but a real $410-vs-$500 mismatch is still caught.
+NUMERIC_TOLERANCE = 0.01
+RELATIVE_TOLERANCE = 0.001
+
+# date / version tokens are NOT quantities — strip them before number extraction so
+# "delivered 2024-01-15" or "v2.1.0" can't be misread as amounts (a demo-breaking
+# false "contradicted").
+_DATE = re.compile(r"\b\d{4}-\d{1,2}-\d{1,2}\b")
+_VERSION = re.compile(r"\bv?\d+(?:\.\d+){2,}\b")
+
+
+def _value_matches(claim_n: float, receipt_nums: set[float]) -> bool:
+    return any(abs(claim_n - rn) <= max(NUMERIC_TOLERANCE, RELATIVE_TOLERANCE * abs(rn))
+               for rn in receipt_nums)
+
 
 @dataclass
 class ClaimVerdict:
@@ -51,8 +67,11 @@ class ClaimVerdict:
 
 
 def _numbers(text: str) -> set[float]:
+    text = _VERSION.sub(" ", _DATE.sub(" ", text))
     out: set[float] = set()
-    for m in re.findall(r"-?\$?\d[\d,]*\.?\d*", text):
+    # a minus only counts when not glued to a preceding digit/dot (avoids splitting
+    # "5-10" or trailing fragments into spurious negatives)
+    for m in re.findall(r"(?<![\d.])-?\$?\d[\d,]*(?:\.\d+)?", text):
         try:
             out.add(float(m.replace("$", "").replace(",", "")))
         except ValueError:
@@ -126,7 +145,7 @@ def cross_check(claim: Claim, receipts: list[Receipt]) -> ClaimVerdict:
     claim_nums = _numbers(text)
     if claim_nums:
         receipt_nums = _receipt_numbers(backing_receipts)
-        unsupported = {n for n in claim_nums if not any(abs(n - rn) < 0.01 for rn in receipt_nums)}
+        unsupported = {n for n in claim_nums if not _value_matches(n, receipt_nums)}
         if unsupported:
             nums = ", ".join(str(int(n) if n.is_integer() else n) for n in sorted(unsupported))
             return ClaimVerdict(claim, "contradicted",

@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" font-family="ui-sans-serif,system-ui,Segoe UI,Roboto,Arial">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#8b9bb4"/>
+    </marker>
+    <style>
+      .bg{fill:#0b0f17}
+      .panel{fill:#131a26;stroke:#243044;stroke-width:1.5;rx:12}
+      .qwen{fill:#10233b;stroke:#3b82f6;stroke-width:1.5}
+      .crypto{fill:#0f2e1a;stroke:#22c55e;stroke-width:1.5}
+      .t{fill:#e6edf6;font-size:14px;font-weight:600}
+      .s{fill:#8b9bb4;font-size:11.5px}
+      .lbl{fill:#8b9bb4;font-size:11px}
+      .edge{stroke:#8b9bb4;stroke-width:1.6;fill:none;marker-end:url(#arr)}
+      .edge-bad{stroke:#ef4444;stroke-width:1.6;fill:none;marker-end:url(#arr)}
+      .h{fill:#3b82f6;font-size:13px;font-weight:700}
+      .grn{fill:#22c55e;font-size:11.5px;font-weight:700}
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1000" height="560"/>
+  <text x="28" y="38" fill="#e6edf6" font-size="20" font-weight="700">Receipt<tspan fill="#3b82f6">Guard</tspan> architecture</text>
+  <text x="28" y="58" class="s">Track 4 · Autopilot Agent · Qwen Cloud — an agent that can't assert a tool result it never got</text>
+
+  <!-- Alibaba Cloud boundary -->
+  <rect x="20" y="78" width="960" height="404" rx="14" fill="none" stroke="#f59e0b" stroke-dasharray="6 5" stroke-width="1.5"/>
+  <text x="36" y="98" fill="#f59e0b" font-size="12" font-weight="700">Alibaba Cloud · Function Compute (FastAPI) + Model Studio (Qwen) + RDS PostgreSQL</text>
+
+  <!-- ticket -->
+  <rect class="panel" x="36" y="120" width="150" height="58" rx="12"/>
+  <text x="52" y="146" class="t">Support ticket</text>
+  <text x="52" y="165" class="s">refund / warranty</text>
+
+  <!-- agent -->
+  <rect class="qwen" x="220" y="112" width="200" height="74" rx="12"/>
+  <text x="238" y="138" class="t">Autopilot Agent</text>
+  <text x="238" y="157" class="h">qwen3-max · tool-calling</text>
+  <text x="238" y="174" class="s">policy gate: act vs escalate</text>
+
+  <!-- tool gateway -->
+  <rect class="crypto" x="470" y="112" width="210" height="74" rx="12"/>
+  <text x="488" y="138" class="t">ToolGateway</text>
+  <text x="488" y="157" class="grn">HMAC-signed receipts</text>
+  <text x="488" y="174" class="s">agent never sees the secret</text>
+
+  <!-- tools -->
+  <rect class="panel" x="730" y="112" width="230" height="74" rx="12"/>
+  <text x="748" y="138" class="t">Business tools</text>
+  <text x="748" y="157" class="s">lookup_order · check_inventory</text>
+  <text x="748" y="173" class="s">refund · email · policy · search_kb</text>
+
+  <!-- draft -> claim extractor -->
+  <rect class="qwen" x="220" y="232" width="200" height="70" rx="12"/>
+  <text x="238" y="258" class="t">Claim extractor</text>
+  <text x="238" y="277" class="h">qwen-flash</text>
+  <text x="238" y="293" class="s">atomic claims, epistemic type</text>
+
+  <!-- cross-check -->
+  <rect class="crypto" x="470" y="232" width="210" height="70" rx="12"/>
+  <text x="488" y="258" class="t">Cross-check vs receipts</text>
+  <text x="488" y="277" class="s">backed / unbacked /</text>
+  <text x="488" y="293" class="s">contradicted / false-absence</text>
+
+  <!-- recovery -->
+  <rect class="qwen" x="470" y="338" width="210" height="78" rx="12"/>
+  <text x="488" y="364" class="t">Tiered recovery (GSAR)</text>
+  <text x="488" y="383" class="s">proceed · regenerate · replan</text>
+  <text x="488" y="400" class="h">qwen3-max thinking → reason</text>
+
+  <!-- audit -->
+  <rect class="crypto" x="730" y="338" width="230" height="78" rx="12"/>
+  <text x="748" y="364" class="t">Audit ledger</text>
+  <text x="748" y="383" class="grn">SHA-256 hash chain</text>
+  <text x="748" y="400" class="s">append-only · RDS PostgreSQL</text>
+
+  <!-- output -->
+  <rect class="panel" x="220" y="338" width="200" height="78" rx="12"/>
+  <text x="238" y="364" class="t">Shipped output</text>
+  <text x="238" y="383" class="grn">every claim receipt-backed</text>
+  <text x="238" y="400" class="s">or blocked + escalated</text>
+
+  <!-- edges -->
+  <path class="edge" d="M186 149 H218"/>
+  <path class="edge" d="M420 149 H468"/>
+  <path class="edge" d="M680 149 H728"/>
+  <text x="690" y="142" class="lbl">execute</text>
+  <path class="edge" d="M320 186 V230"/>
+  <text x="326" y="214" class="lbl">draft answer</text>
+  <path class="edge" d="M420 267 H468"/>
+  <path class="edge-bad" d="M575 302 V336"/>
+  <text x="582" y="324" class="lbl" fill="#ef4444">unbacked</text>
+  <path class="edge" d="M470 377 H422"/>
+  <text x="430" y="370" class="lbl">re-ground</text>
+  <path class="edge" d="M575 230 V190" />
+  <text x="582" y="214" class="lbl">force real tools</text>
+  <path class="edge" d="M680 377 H728"/>
+  <text x="686" y="370" class="lbl">log decision</text>
+  <text x="36" y="470" class="s">Proof of Alibaba usage: src/receiptguard/llm/qwen.py (DashScope OpenAI-compatible). MCP server exposes the guard as tools (SSE on Function Compute).</text>
+</svg>

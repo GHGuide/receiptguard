@@ -92,7 +92,10 @@ class ToolGateway:
     def call(self, tool: str, **args: Any) -> Any:
         if tool not in self._tools:
             raise KeyError(f"unknown tool: {tool}")
-        output = self._tools[tool](**args)
+        try:
+            output = self._tools[tool](**args)
+        except Exception as exc:  # tool failed: still issue a (signed) error-receipt
+            output = {"error": "tool_execution_failed", "tool": tool, "detail": str(exc)}
         self.store.add(tool, args, output)
         self.call_log.append(tool)
         return output
