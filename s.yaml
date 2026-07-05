@@ -19,7 +19,7 @@ resources:
       environmentVariables:
         DASHSCOPE_API_KEY: '${env(DASHSCOPE_API_KEY)}'
         DASHSCOPE_BASE_URL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1'
-        RG_MODEL_AGENT: qwen3-max
+        RG_MODEL_AGENT: qwen3.7-max
         RG_MODEL_WORKER: qwen-flash
         RG_RECEIPT_SECRET: '${env(RG_RECEIPT_SECRET)}'
         RG_LEDGER_PATH: /tmp/receiptguard_ledger.db   # FC: only /tmp is writable
