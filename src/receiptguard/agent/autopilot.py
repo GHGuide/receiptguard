@@ -5,7 +5,7 @@ actor that ReceiptGuard wraps. It generalises across scenarios and shows domain
 judgement: it auto-acts only when policy permits, otherwise it escalates to a
 human (the Track-4 "human-in-the-loop checkpoint at critical decisions").
 
-In real mode it uses qwen3-max function calling. In mock mode it scripts a
+In real mode it uses qwen3.7-max function calling. In mock mode it scripts a
 realistic *hallucinating* first draft (claims tool results it never fetched) so
 the guard has something to catch, then self-corrects on replan using only real
 receipt values — and applies the policy gate to decide act vs escalate.

@@ -5,9 +5,9 @@ flowchart TB
     user([User / business ticket]) --> agent
 
     subgraph qwen["Qwen Cloud · Alibaba Model Studio (DashScope)"]
-        agent["Autopilot agent\nqwen3-max (thinking)"]
+        agent["Autopilot agent\nqwen3.7-max (thinking)"]
         worker["Claim typer\nqwen-flash"]
-        adj["Adjudicator\nqwen3-max · reasoning_content"]
+        adj["Adjudicator\nqwen3.7-max · reasoning_content"]
     end
 
     subgraph fc["Alibaba Function Compute (FastAPI + SSE MCP)"]
@@ -38,7 +38,7 @@ flowchart TB
 ```
 
 ## Data flow
-1. A ticket enters via the demo UI or an MCP client; the **qwen3-max** autopilot
+1. A ticket enters via the demo UI or an MCP client; the **qwen3.7-max** autopilot
    agent plans and calls business tools.
 2. Every tool call is proxied by **ToolGateway**, which executes it and writes an
    **HMAC-signed receipt** (the agent cannot forge one).
@@ -46,7 +46,7 @@ flowchart TB
 4. **cross_check** (pure, deterministic) matches each tool-derived claim to the
    receipts: unbacked / contradicted / false-absence / backed.
 5. **Tiered recovery** scores groundedness and decides proceed / regenerate /
-   replan under a compute budget; **qwen3-max thinking** adjudicates contested
+   replan under a compute budget; **qwen3.7-max thinking** adjudicates contested
    claims and its `reasoning_content` becomes the audit justification.
 6. Every verification + decision is appended to the **hash-chained audit ledger**
    (SQLite locally, Alibaba RDS PostgreSQL in production).

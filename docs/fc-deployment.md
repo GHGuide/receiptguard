@@ -46,7 +46,7 @@ s deploy     # builds image, pushes to ACR, creates function + HTTP trigger
 ## 6. URL + smoke test
 ```bash
 s info       # prints https://<fnId>.ap-southeast-1.fcapp.run
-curl https://<fnId>.ap-southeast-1.fcapp.run/health   # expect "mock":false, "models":{"agent":"qwen3-max"}
+curl https://<fnId>.ap-southeast-1.fcapp.run/health   # expect "mock":false, "models":{"agent":"qwen3.7-max"}
 curl -X POST .../run -H 'content-type: application/json' -d '{"scenario":"refund_damaged"}'
 # open the root URL in a browser for the split-screen UI
 ```
@@ -60,35 +60,35 @@ curl -X POST .../run -H 'content-type: application/json' -d '{"scenario":"refund
 
 ## 9. Logs
 ```bash
-s logs   # capture a live request showing model qwen3-max for the proof recording
+s logs   # capture a live request showing model qwen3.7-max for the proof recording
 ```
 
 ---
 
 ## Proof-recording plan (continuous 60–90s, NO cuts — judges value unedited deploy proof)
 1. **0–10s:** show `s.yaml`, run `s deploy` (or `s info`) so FC function name + region + `fcapp.run` URL are visible.
-2. **10–35s:** `curl .../health` → response must show `"mock": false` and `"models": {"agent": "qwen3-max", ...}` — proves real Qwen on Alibaba, not mock.
+2. **10–35s:** `curl .../health` → response must show `"mock": false` and `"models": {"agent": "qwen3.7-max", ...}` — proves real Qwen on Alibaba, not mock.
 3. **35–70s:** `curl -X POST .../run -d '{"scenario":"refund_damaged"}'` → JSON with HMAC-signed receipts + per-claim verdicts + audit hash chain (+ `reasoning_content` if surfaced).
 4. **70–90s:** open the `fcapp.run` root URL in a browser → split-screen UI live from Alibaba. Optional 3s of FC console (function + ACR image + region). Narrate the `.fcapp.run` host + region so it's unambiguously Alibaba.
 
-**Alibaba-API-usage proof file to link in Devpost:** `src/receiptguard/llm/qwen.py` (the ONLY caller of Alibaba; builds the OpenAI client against the DashScope base_url, calls qwen3-max, reads `reasoning_content`). Secondary: `Dockerfile` + `s.yaml`.
+**Alibaba-API-usage proof file to link in Devpost:** `src/receiptguard/llm/qwen.py` (the ONLY caller of Alibaba; builds the OpenAI client against the DashScope base_url, calls qwen3.7-max, reads `reasoning_content`). Secondary: `Dockerfile` + `s.yaml`.
 
 ## `reasoning_content` check (run BEFORE deploy, then again in FC logs)
 ```bash
 curl -X POST https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions \
   -H "Authorization: Bearer $DASHSCOPE_API_KEY" -H 'Content-Type: application/json' --no-buffer \
-  -d '{"model":"qwen3-max","messages":[{"role":"user","content":"2+2, think first"}],
+  -d '{"model":"qwen3.7-max","messages":[{"role":"user","content":"2+2, think first"}],
        "stream":true,"stream_options":{"include_usage":true},"enable_thinking":true}'
 ```
-Streamed chunks show `delta.reasoning_content` BEFORE the normal `content` deltas. `enable_thinking` is non-standard → stays in `extra_body`; hybrid thinking is OFF by default on qwen3-max so the flag is **mandatory**. `qwen.py` now streams the agent/adjudicate call (see PROGRESS) to de-risk timeouts + guarantee `reasoning_content`.
+Streamed chunks show `delta.reasoning_content` BEFORE the normal `content` deltas. `enable_thinking` is non-standard → stays in `extra_body`; hybrid thinking is OFF by default on qwen3.7-max so the flag is **mandatory**. `qwen.py` now streams the agent/adjudicate call (see PROGRESS) to de-risk timeouts + guarantee `reasoning_content`.
 
 ## Cost (comfortably inside $40, likely ~$0 infra)
-FC new-account free trial dwarfs a demo; ACR Personal is free. **Real spend is DashScope tokens, not infra** — keep `RG_MODEL_WORKER=qwen-flash`, only call qwen3-max on the agent/adjudicate turn, cap `thinking_budget` (2048). WATCH: RDS is NOT free (prefer SQLite-on-`/tmp`, stand RDS up briefly for a screenshot then release); never enable provisioned/reserved instances; SAE/ECS fallbacks bill hourly (stop after recording); NAT/VPC for RDS adds small hourly cost.
+FC new-account free trial dwarfs a demo; ACR Personal is free. **Real spend is DashScope tokens, not infra** — keep `RG_MODEL_WORKER=qwen-flash`, only call qwen3.7-max on the agent/adjudicate turn, cap `thinking_budget` (2048). WATCH: RDS is NOT free (prefer SQLite-on-`/tmp`, stand RDS up briefly for a screenshot then release); never enable provisioned/reserved instances; SAE/ECS fallbacks bill hourly (stop after recording); NAT/VPC for RDS adds small hourly cost.
 
 ## Gotchas
 - **Filesystem read-only except `/tmp`** → `RG_LEDGER_PATH=/tmp/receiptguard_ledger.db`; per-instance + ephemeral (chain resets on recycle — fine for live demo, note in README).
 - **Port/CAPort** → must listen `0.0.0.0:9000` (Dockerfile does). Reusing image for MCP SSE → set `props.port` to the bound port.
-- **SSE is method-gated** → FC streams ONLY for Custom Runtime / Container Image with chunked encoding. A built-in-runtime zip silently breaks SSE + qwen3-max streaming + MCP transport.
+- **SSE is method-gated** → FC streams ONLY for Custom Runtime / Container Image with chunked encoding. A built-in-runtime zip silently breaks SSE + qwen3.7-max streaming + MCP transport.
 - **Timeout vs SSE lifetime** → default 60s kills long connections; raise to 300–900s for MCP SSE, 300 for `/run`.
 - **Cold start** → hit `/health` once to warm before recording.
 - **DashScope intl vs CN** → use `https://dashscope-intl.aliyuncs.com/...` with an intl-account key. Never bake `DASHSCOPE_API_KEY` / `RG_RECEIPT_SECRET` into the image — pass via FC env vars; the receipt secret MUST be a real `token_hex(32)`, not the dev default, or the unforgeable-receipt claim is bogus.

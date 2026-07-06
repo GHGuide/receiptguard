@@ -4,6 +4,7 @@ reproducible. Each call through ToolGateway produces a signed receipt.
 """
 from __future__ import annotations
 
+import hashlib
 from typing import Any
 
 # --- fixture data -----------------------------------------------------------
@@ -37,7 +38,10 @@ def process_refund(order_id: str, amount: float) -> dict[str, Any]:
 
 
 def send_email(to: str, subject: str, body: str) -> dict[str, Any]:
-    return {"to": to, "subject": subject, "status": "sent", "message_id": f"MSG-{abs(hash(subject)) % 10000:04d}"}
+    # R14: sha256-derived id, not Python's salted hash(), so fixtures are reproducible
+    # across runs (PYTHONHASHSEED-independent) — the "deterministic proof" story holds.
+    mid = int(hashlib.sha256(subject.encode()).hexdigest(), 16) % 10000
+    return {"to": to, "subject": subject, "status": "sent", "message_id": f"MSG-{mid:04d}"}
 
 
 def search_kb(query: str) -> dict[str, Any]:

@@ -70,8 +70,9 @@ def _numbers(text: str) -> set[float]:
     text = _VERSION.sub(" ", _DATE.sub(" ", text))
     out: set[float] = set()
     # a minus only counts when not glued to a preceding digit/dot (avoids splitting
-    # "5-10" or trailing fragments into spurious negatives)
-    for m in re.findall(r"(?<![\d.])-?\$?\d[\d,]*(?:\.\d+)?", text):
+    # "5-10" into spurious negatives). R28: also catch a leading-dot amount ("$.50")
+    # and scientific notation ("1e6") without splitting the exponent.
+    for m in re.findall(r"(?<![\d.])-?\$?(?:\d[\d,]*\.?\d*|\.\d+)(?:[eE][+-]?\d+)?", text):
         try:
             out.add(float(m.replace("$", "").replace(",", "")))
         except ValueError:
@@ -106,6 +107,11 @@ def _candidate_tools(text: str) -> list[str]:
 def _receipt_numbers(receipts: list[Receipt]) -> set[float]:
     acc: set[float] = set()
     for r in receipts:
+        # R13: a tool that ERRORED still gets a signed receipt, but its error detail
+        # (e.g. "timeout 500") is NOT a real tool result — its numbers must not back a
+        # claim, or a fabricated "$500 refund" gets laundered as backed by the error text.
+        if isinstance(r.output, dict) and "error" in r.output:
+            continue
         _gather_numbers(r.output, acc)
     return acc
 
@@ -113,6 +119,11 @@ def _receipt_numbers(receipts: list[Receipt]) -> set[float]:
 def cross_check(claim: Claim, receipts: list[Receipt]) -> ClaimVerdict:
     text = claim.text
     low = text.lower()
+
+    # R15: an empty/whitespace claim asserts nothing — treat as opinion (pass), never
+    # let a blank tool_derived claim force a spurious replan (denial-of-progress).
+    if not text.strip():
+        return ClaimVerdict(claim, "opinion", "empty claim; nothing to verify")
 
     if claim.type == "opinion":
         return ClaimVerdict(claim, "opinion", "subjective; not a factual assertion")

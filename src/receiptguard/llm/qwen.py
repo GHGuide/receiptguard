@@ -3,7 +3,7 @@
 Uses the OpenAI-compatible DashScope endpoint (Alibaba Model Studio). This file
 is the submission's "proof of Alibaba Cloud service/API usage".
 
-qwen3-max thinking mode returns a separate `reasoning_content` field; we surface
+qwen3.7-max thinking mode returns a separate `reasoning_content` field; we surface
 it so it can be stored as a human-readable audit justification — an artifact the
 OpenAI o-series does not expose.
 
@@ -40,7 +40,11 @@ class QwenClient:
         if self._client is None:
             from openai import OpenAI  # imported lazily so mock mode needs no install
 
-            self._client = OpenAI(api_key=settings.api_key, base_url=settings.base_url)
+            # wall-clock timeout + capped retries: the SDK default (~600s x2) can
+            # exceed Function Compute's 300s ceiling, and FC would kill the request
+            # before the audit-ledger turn is written.
+            self._client = OpenAI(api_key=settings.api_key, base_url=settings.base_url,
+                                  timeout=settings.llm_timeout_s, max_retries=1)
         return self._client
 
     def complete(

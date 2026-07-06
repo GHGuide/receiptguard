@@ -43,6 +43,9 @@
 </header>
 <div class="bar">
   <select id="scenario"></select>
+  <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--mut);cursor:pointer">
+    <input type="checkbox" id="adv" /> inject fabrication (red-team)
+  </label>
   <button id="run">▶ Run autopilot</button>
   <span class="mode" id="mode">…</span>
 </div>
@@ -71,7 +74,9 @@
 const STATUS_OK = new Set(["backed","opinion","inference"]);
 async function init(){
   const r = await fetch('/health').then(x=>x.json());
-  document.getElementById('mode').textContent = (r.mock?'MOCK mode (offline)':'LIVE · '+r.models.agent);
+  const m=document.getElementById('mode');
+  if(r.mock){ m.textContent='○ MOCK (offline)'; m.style.color='var(--mut)'; }
+  else { m.textContent='● LIVE'+(location.hostname.includes('fcapp.run')?' · Alibaba FC':'')+' · '+r.models.agent; m.style.color='var(--green)'; }
   const s = await fetch('/scenarios').then(x=>x.json());
   const sel = document.getElementById('scenario');
   for(const [k,v] of Object.entries(s.scenarios)){ const o=document.createElement('option'); o.value=k; o.textContent=v; sel.appendChild(o); }
@@ -88,7 +93,8 @@ function render(box, verdicts){ box.innerHTML=''; verdicts.forEach(v=>box.append
 async function run(){
   const btn=document.getElementById('run'); btn.disabled=true; btn.textContent='running…';
   const scenario=document.getElementById('scenario').value;
-  const r = await fetch('/run',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({scenario})}).then(x=>x.json());
+  const adversarial=document.getElementById('adv').checked;
+  const r = await fetch('/run',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({scenario,adversarial})}).then(x=>x.json());
   document.getElementById('b-draft').textContent = r.baseline.draft;
   render(document.getElementById('b-claims'), r.baseline.verdicts);
   document.getElementById('b-badge').textContent = r.baseline.failed+' fabricated';
@@ -98,7 +104,7 @@ async function run(){
   document.getElementById('g-badge').textContent = r.guarded.shipped?('shipped · grounding '+r.guarded.score):'blocked';
   const firstReason = r.guarded.iterations.find(i=>i.reasoning);
   const rn = document.getElementById('g-reason');
-  if(firstReason){ rn.style.display='block'; rn.innerHTML='<b>qwen3-max reasoning:</b> '+firstReason.reasoning; } else rn.style.display='none';
+  if(firstReason){ rn.style.display='block'; rn.innerHTML='<b>qwen3.7-max reasoning:</b> '+firstReason.reasoning; } else rn.style.display='none';
   document.getElementById('rcpts').innerHTML = '<b>signed receipts ('+r.receipts.length+'):</b> '+r.receipts.map(x=>x.tool+' ['+x.receipt_id+']').join('  ·  ');
   document.getElementById('audit').innerHTML = '<b>hash-chained audit:</b> '+r.audit.map(e=>e.kind+' '+e.hash+'…').join(' → ')+
      '  —  chain <span class="'+(r.chain_ok?'chain-ok':'chain-bad')+'">'+(r.chain_ok?'VERIFIED ✓':'BROKEN ✗')+'</span>';

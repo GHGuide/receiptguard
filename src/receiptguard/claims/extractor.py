@@ -31,6 +31,12 @@ class Claim:
 
 
 def extract_claims(draft: str) -> list[Claim]:
+    # R11: guard non-str / empty input so a bad draft can't 400 the LLM call and
+    # crash the whole verify pass. Nothing to extract from an empty draft.
+    if not isinstance(draft, str):
+        draft = "" if draft is None else str(draft)
+    if not draft.strip():
+        return []
     resp = client.complete(
         [{"role": "system", "content": _SYS}, {"role": "user", "content": draft}],
         task="claim_extract",
@@ -42,6 +48,8 @@ def extract_claims(draft: str) -> list[Claim]:
 
 
 def _parse(content: str) -> list[Claim]:
+    if not isinstance(content, str):  # R12: never re-raise inside the except on non-str
+        return []
     try:
         start, end = content.find("{"), content.rfind("}")
         data = json.loads(content[start : end + 1])

@@ -150,6 +150,42 @@ def test_extraction_fails_safe_on_actions():
         assert claims and claims[0].type == "tool_derived", f"{draft!r} -> {claims}"
 
 
+# ----------------------------- runbook fixes (R11–R28) -----------------------------
+
+def test_r13_error_receipt_detail_does_not_back_claim():
+    """R13: numbers in a tool's ERROR receipt must not launder a fabricated amount."""
+    def boom(**_):
+        raise RuntimeError("upstream 500 error")
+    gw = ToolGateway({"process_refund": boom})
+    gw.call("process_refund", order_id="X", amount=500)  # error-receipt; detail contains "500"
+    v = cross_check(Claim("I processed a $500 refund.", "tool_derived"), gw.store.all())
+    assert v.failed  # the "500" from the error detail must NOT count as backing
+
+
+def test_r15_empty_claim_passes():
+    assert cross_check(Claim("   ", "tool_derived"), []).status == "opinion"
+
+
+def test_r11_extract_claims_nonstr_safe():
+    from receiptguard.claims import extract_claims
+    assert extract_claims(None) == []
+    assert extract_claims("   ") == []
+
+
+def test_r14_email_message_id_deterministic():
+    from receiptguard.gateway.tools import send_email
+    a = send_email("a@b.com", "Your refund", "x")["message_id"]
+    b = send_email("c@d.com", "Your refund", "y")["message_id"]
+    assert a == b and a.startswith("MSG-")
+
+
+def test_r28_numeric_edge_cases():
+    from receiptguard.verify.crosscheck import _numbers
+    assert _numbers("$.50") == {0.5}
+    assert 1e6 in _numbers("shipped 1e6 units")
+    assert _numbers("delivered 2024-01-15") == set()  # date still not an amount
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     passed = 0

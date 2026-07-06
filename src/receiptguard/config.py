@@ -32,13 +32,17 @@ class Settings:
     base_url: str = os.environ.get(
         "DASHSCOPE_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
     ).strip()
-    model_agent: str = os.environ.get("RG_MODEL_AGENT", "qwen3-max").strip()
+    model_agent: str = os.environ.get("RG_MODEL_AGENT", "qwen3.7-max").strip()
     model_worker: str = os.environ.get("RG_MODEL_WORKER", "qwen-flash").strip()
     model_embed: str = os.environ.get("RG_MODEL_EMBED", "text-embedding-v4").strip()
     receipt_secret: str = os.environ.get("RG_RECEIPT_SECRET", "dev-only-insecure-secret-change-me")
     ledger_path: str = os.environ.get("RG_LEDGER_PATH", "receiptguard_ledger.db")
     thinking_budget: int = int(os.environ.get("RG_THINKING_BUDGET", "2048"))
     agent_max_tool_steps: int = int(os.environ.get("RG_AGENT_MAX_TOOL_STEPS", "8"))
+    # per-LLM-call wall-clock cap (s) — a slow thinking call must not hang the request.
+    llm_timeout_s: float = float(os.environ.get("RG_LLM_TIMEOUT_S", "60"))
+    # cumulative per-run budget (s) — ~30 sequential calls must fit under FC's 300s ceiling.
+    run_budget_s: float = float(os.environ.get("RG_RUN_BUDGET_S", "240"))
 
     def __post_init__(self) -> None:
         # validate without mutating (frozen): fail fast on a misconfigured live deploy
@@ -48,6 +52,8 @@ class Settings:
             raise ValueError("RG_THINKING_BUDGET must be positive")
         if self.agent_max_tool_steps <= 0:
             raise ValueError("RG_AGENT_MAX_TOOL_STEPS must be positive")
+        if self.llm_timeout_s <= 0 or self.run_budget_s <= 0:
+            raise ValueError("RG_LLM_TIMEOUT_S and RG_RUN_BUDGET_S must be positive")
 
     @property
     def mock(self) -> bool:

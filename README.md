@@ -4,7 +4,7 @@
 
 > Global AI Hackathon Series with Qwen Cloud — **Track 4: Autopilot Agent**
 
-A `qwen3-max` agent resolves real support tickets end-to-end (refunds, warranty
+A `qwen3.7-max` agent resolves real support tickets end-to-end (refunds, warranty
 replacements). Watch what happens without a guard: it confidently reports *"the
 Standing Desk has 8 units in stock, so I shipped a free replacement and emailed
 the tracking number"* — when it never checked inventory, never shipped anything,
@@ -40,7 +40,7 @@ Proof-of-execution, not vibe-checking.
 ## The mechanism
 
 ```
-ticket ─▶ Autopilot agent (qwen3-max) ──tools──▶ ToolGateway ──▶ HMAC-signed receipts
+ticket ─▶ Autopilot agent (qwen3.7-max) ──tools──▶ ToolGateway ──▶ HMAC-signed receipts
                   │                                                      │
                   ▼ draft answer                                         │
         Claim extractor (qwen-flash)  ── atomic claims, typed ──┐        │
@@ -50,7 +50,7 @@ ticket ─▶ Autopilot agent (qwen3-max) ──tools──▶ ToolGateway ─�
                                         ┌───────────────────────┤
                                         ▼ all backed             ▼ unbacked / contradicted
                                      PROCEED            Tiered recovery (GSAR): regenerate / replan
-                                                          (qwen3-max thinking adjudicates,
+                                                          (qwen3.7-max thinking adjudicates,
                                                            reasoning_content = audit reason)
                                         └──────────┬────────────┘
                                                    ▼
@@ -67,7 +67,7 @@ ticket ─▶ Autopilot agent (qwen3-max) ──tools──▶ ToolGateway ─�
    missing receipt → *unbacked*; value/count mismatch → *contradicted*;
    "nothing found" with a non-empty receipt → *false absence*.
 4. **Tiered recovery** — groundedness score → `proceed / regenerate / replan`
-   under an explicit compute budget (GSAR, arXiv 2604.23366). `qwen3-max`
+   under an explicit compute budget (GSAR, arXiv 2604.23366). `qwen3.7-max`
    thinking-mode adjudicates contested claims; its `reasoning_content` is stored
    as the human-readable justification.
 5. **Audit** — every decision is appended to a SHA-256 hash-chained ledger;
@@ -115,12 +115,12 @@ PYTHONPATH=src python -m receiptguard.cli run warranty_replacement     # 2nd sce
 PYTHONPATH=src python -m receiptguard.cli run refund_damaged --adversarial  # inject a lie -> watch it get caught
 PYTHONPATH=src python -m receiptguard.cli serve                        # demo UI at http://localhost:8000
 PYTHONPATH=src python -m receiptguard.cli bench 200                     # detection benchmark + ablation + chart
-PYTHONPATH=src python tests/test_receiptguard.py                       # test suite (13 tests)
+PYTHONPATH=src python tests/test_receiptguard.py                       # test suite (20 tests)
 ```
 
 ### Going live on Qwen / Alibaba Cloud
 Copy `.env.example` → `.env`, set `DASHSCOPE_API_KEY` (Alibaba Model Studio).
-With a key, the agent (`qwen3-max`, thinking mode), claim typer (`qwen-flash`),
+With a key, the agent (`qwen3.7-max`, thinking mode), claim typer (`qwen-flash`),
 and the LLM-judge baseline call real Qwen via the OpenAI-compatible DashScope
 endpoint. No key → mock mode, everything still runs.
 
@@ -133,7 +133,7 @@ endpoint. No key → mock mode, everything still runs.
 
 | Criterion | How |
 |---|---|
-| **Innovation 30%** (tiebreaker) | the *composition*, not the primitive: receipts + epistemic claim-typing + GSAR tiered recovery + auto-act/escalate policy gate + audit ledger, served over MCP; `reasoning_content` as audit artifact; two-speed qwen-flash/qwen3-max fleet under a `thinking_budget` |
+| **Innovation 30%** (tiebreaker) | the *composition*, not the primitive: receipts + epistemic claim-typing + GSAR tiered recovery + auto-act/escalate policy gate + audit ledger, served over MCP; `reasoning_content` as audit artifact; two-speed qwen-flash/qwen3.7-max fleet under a `thinking_budget` |
 | **Technical Depth 30%** | deterministic verifier (no LLM in the hot path), modular adapters, hash-chained ledger, reproducible benchmark + ablations |
 | **Problem Value 25%** | fabricated tool results are the #1 blocker to autonomous agents — one hallucinated "refund issued / replacement shipped" is a direct cash loss + a compliance event, multiplied across support volume; ReceiptGuard is a drop-in MCP gateway any Qwen agent installs |
 | **Presentation 15%** | live split-screen demo: watch the agent get caught lying and self-correct, on the record |

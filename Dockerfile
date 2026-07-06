@@ -13,4 +13,5 @@ ENV PYTHONPATH=/app/src
 ENV PORT=9000
 EXPOSE 9000
 
-CMD ["sh", "-c", "uvicorn receiptguard.api.app:app --host 0.0.0.0 --port ${PORT}"]
+# Function Compute injects $FC_SERVER_PORT; fall back to $PORT then 9000.
+CMD ["sh", "-c", "uvicorn receiptguard.api.app:app --host 0.0.0.0 --port ${FC_SERVER_PORT:-${PORT:-9000}}"]
