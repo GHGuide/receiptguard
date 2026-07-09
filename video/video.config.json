@@ -1,0 +1,70 @@
+{
+  "project": "receiptguard",
+  "title": "ReceiptGuard — the agent that can't lie about its tools",
+  "subject": "A support autopilot that acts only on tool results it can prove, and escalates the rest to humans",
+  "tagline": "Acts only on what it can prove.",
+  "max_duration_sec": 180,
+  "target_duration_sec": 150,
+  "_duration_note": "Aim ~2:30 (150s); hard cap 180s. Slack-session lesson: a 1:36 cut felt thin — fill with a split-screen contrast + a multi-feature montage, don't pad with dead air.",
+  "target_resolution": [
+    1920,
+    1080
+  ],
+  "fps": 30,
+  "named_task": "Resolve this refund ticket — and prove every tool result",
+  "brand": {
+    "theme": "qwen"
+  },
+  "voice": {
+    "engine": "elevenlabs",
+    "id": "EXAVITQu4vr4xnSDxMaL",
+    "model": "eleven_multilingual_v2",
+    "settings": {
+      "stability": 0.5,
+      "similarity_boost": 0.8,
+      "style": 0,
+      "use_speaker_boost": true,
+      "speed": 0.96
+    },
+    "_note": "LOCKED: id=Sarah (calm-confident WOMAN, Anthropic-presentation register). Slack-session lesson U29 — never a generic/male voice; that was rejected. 0.96 speed = breathing room.",
+    "_draft_rule": "edge-tts fallback (female en-US-AvaNeural) is DRAFT ONLY for fast iteration. The final master MUST use ElevenLabs — build.mjs warns if a draft VO reaches package/validate.",
+    "_key_rule": "ELEVENLABS_API_KEY lives in <project>/.env (see .env.example) and is NEVER pasted into chat. If a key is ever exposed in a transcript, rotate it.",
+    "fallback": {
+      "engine": "edge-tts",
+      "id": "en-US-AvaNeural",
+      "rate": "-4%"
+    }
+  },
+  "music": {
+    "file": "assets/music.wav",
+    "license": "assets/MUSIC_LICENSE.txt",
+    "duck_db": -11,
+    "bed_db": -23,
+    "_note": "Keyless CC0/royalty-free only. duck_db = how far music drops under VO."
+  },
+  "captions": true,
+  "loudness_lufs": -14,
+  "capture": {
+    "base_url": "http://localhost:8000",
+    "viewport": [
+      1280,
+      800
+    ],
+    "device_scale_factor": 2,
+    "allow_mock": false,
+    "_note": "deviceScaleFactor 2 -> 2560x1600 true-retina PNG frames.",
+    "_live_rule": "LIVE APP ONLY. capture-kit refuses file://, about:, blank pages unless allow_mock:true. Slack-session lesson U34: the agent kept shipping 'styled recreations' instead of real footage — that loses. Start the real app, point base_url at it. Reuse a signed-in session via storage_state (a Playwright storageState JSON) instead of mockups.",
+    "storage_state": null
+  },
+  "output": {
+    "master": "out/receiptguard-demo.mp4",
+    "youtube": "out/receiptguard-demo-yt.mp4",
+    "thumbnail": "out/thumbnail.png"
+  },
+  "assets": {
+    "logo": "assets/logo.svg",
+    "architecture": "assets/architecture.png"
+  },
+  "humanize_motion": true,
+  "_humanize_note": "Video humanizer: subtle handheld drift + gate flicker on motion-graphic scenes so they read as shot, not generated. Capture footage stays locked. false = perfectly locked."
+}

@@ -1,0 +1,8 @@
+# Generated video artifacts — reproducible from source (script + scenes + config).
+# The final film is uploaded to YouTube, not stored in git.
+captures/
+out/
+vo/
+node_modules/
+assets/*.wav
+*.log
