@@ -53,7 +53,11 @@ s logs                  # capture a live line showing the real qwen model id
 ```
 **BLOCKER RIGHT NOW:** Alibaba account not logged in (browser shows logout / China site).
 Deploy targets the **International** site — sign in at `account.alibabacloud.com`.
-- ✅ **A1-confirm:** verify `qwen3.7-max` is a real model id on the account before deploy, else `/run` 500s on camera.
+- ✅ **A1-confirm DONE (pre-verified):** live-probed the DashScope key — `qwen3.7-max`, `qwen3-max`,
+  `qwen-max`, `qwen-flash` all resolve (200 OK). App boots clean in LIVE mode locally:
+  `/health` → `{"mock":false,"models":{"agent":"qwen3.7-max","worker":"qwen-flash"}}`. On-camera
+  500 risk eliminated. `.env` already holds the DashScope key; only the Alibaba **RAM AccessKey**
+  (deploy cred, distinct from the DashScope key) + Docker daemon + ACR repo remain.
 
 ### A2 — deploy-proof recording — 🔴 USER
 Short screen recording (separate from the demo) proving the backend runs on Alibaba: show the

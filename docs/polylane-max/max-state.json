@@ -70,6 +70,12 @@
       "kind": "learning",
       "text": "Hardening lane: 22/22 green; live results.json preserved (mock would contradict README live-0%)",
       "meta": ""
+    },
+    {
+      "cycle": 1,
+      "kind": "learning",
+      "text": "Pre-deploy verified: qwen3.7-max resolves live, app boots mock:false clean. Only RAM AccessKey+Docker+ACR left for deploy.",
+      "meta": ""
     }
   ]
 }
