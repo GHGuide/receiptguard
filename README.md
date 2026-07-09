@@ -47,6 +47,12 @@ Proof-of-execution, not vibe-checking.
 
 ![ReceiptGuard architecture](docs/architecture.svg)
 
+**The money shot** — inject a fabrication (red-team toggle) and watch the baseline ship 3 lies
+while ReceiptGuard blocks each unbacked claim and re-grounds against signed receipts, with
+`qwen3.7-max` reasoning shown live:
+
+![ReceiptGuard catching fabrications live](docs/screenshot-money-shot.png)
+
 **Proven:** 100% fabrication-detection at 0% false-positives, sub-millisecond — while a **real `qwen-flash` judge with no receipts catches 0%** of the same fabrications (and is ~1000× slower). An ablation shows the receipt value-check is load-bearing; claim-typing fails **safe** (100% `tool_derived` recall). Runs live on **Qwen3.7-Max + Qwen-Flash** via Alibaba Model Studio. *(Full table below.)*
 
 **vs the field:** [ZeroClaw](https://github.com/zeroclaw-labs/zeroclaw/blob/master/docs/book/src/security/tool-receipts.md) / [Fetch.ai AEVS](https://aevs.fetch.ai/) prove a tool *ran* but never check the agent's prose against the receipt (ZeroClaw's own docs: receipts *"don't constrain text output"*). ReceiptGuard does the part they skip — types every claim, cross-checks each against its receipt, recovers or escalates, then resolves the ticket.
