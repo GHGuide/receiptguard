@@ -1,0 +1,75 @@
+{
+  "ultimate": "ReceiptGuard fully deploy-ready on Alibaba + Devpost-submitted, judging-maxed, before Jul 9 2pm PDT",
+  "criteria": [
+    {
+      "id": "c1",
+      "text": "Deployed on Alibaba FC + deploy-proof recording + qwen.py linked",
+      "weight": 30,
+      "status": "open",
+      "score": 0
+    },
+    {
+      "id": "c2",
+      "text": "~3min public demo video via video-pipeline, linked in Devpost",
+      "weight": 25,
+      "status": "open",
+      "score": 0
+    },
+    {
+      "id": "c3",
+      "text": "Highest-leverage hardening merged (bench rigor + value model), tests green",
+      "weight": 25,
+      "status": "done",
+      "score": 0
+    },
+    {
+      "id": "c4",
+      "text": "Devpost submission complete: public repo+LICENSE, arch diagram, text, Track4, blog",
+      "weight": 20,
+      "status": "open",
+      "score": 0
+    }
+  ],
+  "milestones": [
+    {
+      "id": "m1",
+      "text": "Deploy-ready + deployed on Alibaba FC",
+      "subgoals": []
+    },
+    {
+      "id": "m2",
+      "text": "Demo video produced via pipeline + uploaded",
+      "subgoals": []
+    },
+    {
+      "id": "m3",
+      "text": "Judging-maxed hardening (Section B high-leverage)",
+      "subgoals": []
+    },
+    {
+      "id": "m4",
+      "text": "Devpost submission packaged + submitted",
+      "subgoals": []
+    }
+  ],
+  "log": [
+    {
+      "cycle": 1,
+      "kind": "decision",
+      "text": "Focused sprint: deploy(user-gated)+video(pipeline)+hardening lanes",
+      "meta": "10.5h to deadline; conversions > build cycles"
+    },
+    {
+      "cycle": 1,
+      "kind": "attempt",
+      "text": "Chrome-drive Alibaba AccessKey lookup",
+      "meta": "BLOCKED: user logged out, China site — user must sign in intl"
+    },
+    {
+      "cycle": 1,
+      "kind": "learning",
+      "text": "Hardening lane: 22/22 green; live results.json preserved (mock would contradict README live-0%)",
+      "meta": ""
+    }
+  ]
+}
