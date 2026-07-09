@@ -76,6 +76,18 @@
       "kind": "learning",
       "text": "Pre-deploy verified: qwen3.7-max resolves live, app boots mock:false clean. Only RAM AccessKey+Docker+ACR left for deploy.",
       "meta": ""
+    },
+    {
+      "cycle": 1,
+      "kind": "decision",
+      "text": "README money-shot screenshot from real capture (frame_00300)",
+      "meta": "judges may score README alone; Presentation 15%"
+    },
+    {
+      "cycle": 1,
+      "kind": "learning",
+      "text": "Video draft 2:49 rendered clean; SplitScreen+MCP beats verified visually. Final=ElevenLabs swap.",
+      "meta": ""
     }
   ]
 }

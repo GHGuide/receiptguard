@@ -68,12 +68,13 @@ qwen call. Link `src/receiptguard/llm/qwen.py` in Devpost as the Alibaba-API-usa
 
 ## B. DEMO VIDEO via parent `video-pipeline/` (Remotion + Playwright + ElevenLabs)
 
-### B0 — pipeline prep — 🟡 IN PROGRESS (video lane)
-- ✅ `video/` scaffolded (theme qwen), toolchain verified (Playwright chromium + ffmpeg + node all present)
-- 🟡 Video lane authoring `script/script.json` (ReceiptGuard heist arc) + `capture/scenes.mjs`
-  (drives the real demo UI: `#scenario`/`#adv`/`#run` → money-shot = adversarial catch)
-- 🟡 Recording captures against local demo (localhost:8000) + rendering a captions/edge-tts DRAFT cut
-- The draft proves the pipeline end-to-end; **ElevenLabs key is the ONLY thing between draft and final master.**
+### B0 — draft film DONE ✅
+- ✅ `video/` built via pipeline (theme qwen); 11-scene heist arc, **2:49 (169.1s)**, 1920×1080, VALIDATE ok (<180s)
+- ✅ 3 live captures of the real demo UI (happy / money-shot / ledger)
+- ✅ Motion-graphic beats render clean: TitleCards, NamedTask, **SplitScreen contrast** (without/with),
+  **MCP-server** scene (Innovation), StatPunch with ablation numbers (Depth), LogoCta
+- ✅ Master at `video/out/receiptguard-demo.mp4` (+ YouTube cut + thumbnail)
+- **ElevenLabs key is the ONLY thing between this draft and the final master** (Sarah VO).
 
 ### B1 — final master + upload — 🔴 USER
 1. (optional, better) put `ELEVENLABS_API_KEY` in `video/.env` → rerun `build.mjs --only vo,mix,package` for Sarah VO.
