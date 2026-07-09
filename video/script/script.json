@@ -1,6 +1,6 @@
 {
   "project": "receiptguard",
-  "_doc": "VO is the timing backbone — scene length = measured VO duration + 0.6s pad, NOT target_sec. ReceiptGuard heist arc: cold open (a confident hallucination) → the ask → how it can't lie → LIVE run (baseline hallucinates, guard verifies + ships) → LIVE catch (inject a fabrication, guard catches it) → LIVE ledger reveal (signed receipts + hash chain VERIFIED) → reframe StatPunch → logo. SplitScreen graphic is NOT implemented in this build; the baseline-vs-ReceiptGuard contrast is captured LIVE (the demo UI is itself a split view) and the outcome is a data-driven StatPunch. capture:null = motion graphic; capture:'captures/x' = LIVE app footage over http://localhost:8000 (never a recreation).",
+  "_doc": "VO is the timing backbone — scene length = measured VO duration + 0.6s pad, NOT target_sec. Target ~2:50 (170s), hard cap 180s. ReceiptGuard heist arc: cold open (a confident hallucination + real-world stakes) → the ask → how it can't lie → LIVE run (baseline hallucinates, guard verifies + ships, on Alibaba FC) → LIVE catch (inject a fabrication, GSAR recovery) → SplitScreen contrast (without vs with) → LIVE ledger reveal (tamper breaks chain) → MCP server (three tools) → benchmark + ablation reframe → logo. capture:null = motion graphic; capture:'captures/x' = LIVE app footage over http://localhost:8000 (never a recreation).",
   "scenes": [
     {
       "id": "s01_hook",
@@ -18,8 +18,8 @@
     {
       "id": "s02_caught",
       "beat": "cold_open",
-      "vo": "Except that refund never happened. The agent made the tool result up. ReceiptGuard makes that structurally impossible.",
-      "target_sec": 9,
+      "vo": "Except that refund never happened — the agent made the tool result up. A tribunal has already held an airline liable for exactly this: a support chatbot that invented a refund policy. ReceiptGuard makes that structurally impossible.",
+      "target_sec": 13,
       "capture": null,
       "graphic": "TitleCard",
       "graphic_props": {
@@ -44,7 +44,7 @@
     {
       "id": "s04_how",
       "beat": "the_ask",
-      "vo": "Every tool call runs through a gateway that signs its result with a receipt. Every claim the agent writes is cross-checked against those receipts. No receipt, no ship.",
+      "vo": "Every tool call runs through a gateway that signs its result with an unforgeable receipt. Every claim the agent writes is cross-checked against those receipts. No receipt, no ship.",
       "target_sec": 11,
       "capture": null,
       "graphic": "TitleCard",
@@ -57,43 +57,82 @@
     {
       "id": "s05_run",
       "beat": "accept_plan",
-      "vo": "Watch it live. It plans with Qwen3-Max, signs every tool result, types every claim to a receipt, and ships only what's backed. The baseline agent, on the left, hallucinates. ReceiptGuard, on the right, does not.",
-      "target_sec": 18,
+      "vo": "Watch it live, on Alibaba Function Compute. It plans with Qwen3-Max, runs real tools through a gateway that signs every result, and a cheap Qwen-Flash pass types every claim back to a receipt. On the left, the baseline hallucinates. On the right, ReceiptGuard ships only what's backed.",
+      "target_sec": 17,
       "capture": "captures/plan",
       "captions": true
     },
     {
       "id": "s06_catch",
       "beat": "action_montage",
-      "vo": "Now inject a fabrication it never earned — a fifty-dollar goodwill credit with no receipt behind it. The baseline ships it. ReceiptGuard catches the unbacked claim, explains exactly why, and regenerates a clean, fully-grounded reply.",
-      "target_sec": 18,
+      "vo": "Now inject a fabrication it never earned — a fifty-dollar goodwill credit with no receipt. The baseline ships the lie. ReceiptGuard flags the unbacked claim, regenerates, and rewrites a clean, grounded reply — and Qwen3-Max's reasoning shows exactly why.",
+      "target_sec": 15,
       "capture": "captures/moneyshot",
       "captions": true
     },
     {
-      "id": "s07_ledger",
+      "id": "s07_contrast",
+      "beat": "contrast",
+      "vo": "Here's the difference. Without the guard, an agent ships fabrications straight to your customers and your books. With it, every unbacked claim is blocked before it commits — and anything outside policy goes to a human.",
+      "target_sec": 14,
+      "capture": null,
+      "graphic": "SplitScreen",
+      "graphic_props": {
+        "leftLabel": "Without ReceiptGuard",
+        "rightLabel": "With ReceiptGuard",
+        "dividerLabel": "VS",
+        "leftItems": [
+          { "who": "Agent", "text": "Refund approved — $240 credited.", "tone": "muted" },
+          { "who": "Agent", "text": "Inventory checked, replacement shipped.", "tone": "muted" },
+          { "who": "Ledger", "text": "…none of those tools were ever called.", "tone": "warn" },
+          { "who": "Finance", "text": "phantom payouts + a compliance event.", "tone": "warn" }
+        ],
+        "rightItems": [
+          { "who": "Guard", "text": "3 unbacked claims blocked before commit.", "tone": "accent" },
+          { "who": "Guard", "text": "Re-grounded against signed receipts.", "tone": "ok" },
+          { "who": "Guard", "text": "Out of policy → escalated to a human.", "tone": "ok" },
+          { "who": "Ledger", "text": "every decision hash-chained.", "tone": "ok" }
+        ]
+      },
+      "captions": true
+    },
+    {
+      "id": "s08_ledger",
       "beat": "reveal_artifact",
-      "vo": "Every decision lands on an append-only, tamper-evident ledger. Signed receipts, hash-chained. Change one row and the whole chain breaks.",
-      "target_sec": 13,
+      "vo": "Every decision lands on an append-only, tamper-evident ledger. Signed receipts, hash-chained with SHA-256. Change one row and the whole chain breaks, visibly — that's EU AI Act record-keeping, built in from the start.",
+      "target_sec": 14,
       "capture": "captures/reveal",
       "captions": true
     },
     {
-      "id": "s08_reframe",
+      "id": "s09_mcp",
+      "beat": "feature",
+      "vo": "And it's not a closed demo — ReceiptGuard is an installable MCP server. Any client can call the whole safety loop as three tools: run the guarded autopilot, verify claims, list scenarios. Drop it in front of any agent that touches money.",
+      "target_sec": 14,
+      "capture": null,
+      "graphic": "TitleCard",
+      "graphic_props": {
+        "kicker": "Not a closed demo — an MCP server",
+        "line": "run_guarded_autopilot · verify_claims · list_scenarios"
+      },
+      "captions": true
+    },
+    {
+      "id": "s10_reframe",
       "beat": "outcome_reframe",
-      "vo": "On our self-authored adversarial set: a hundred percent of fabrications caught, zero false positives. We tested exactly what we claim.",
-      "target_sec": 9,
+      "vo": "On our self-authored adversarial set: a hundred percent of fabrications caught, zero false positives. Turn the receipt check off and detection falls to sixty-seven percent. A raw judge with no receipts? A hundred percent false positives.",
+      "target_sec": 14,
       "capture": null,
       "graphic": "StatPunch",
       "graphic_props": {
         "stat": "100%",
         "unit": "of fabrications caught",
-        "sub": "0% false positives · self-authored adversarial set"
+        "sub": "0% false positives · ablation 66.7% · self-authored adversarial set"
       },
       "captions": true
     },
     {
-      "id": "s09_logo",
+      "id": "s11_logo",
       "beat": "logo_cta",
       "vo": "ReceiptGuard. A support autopilot that acts only on what it can prove, and escalates the rest to humans. Built on Qwen3-Max, Qwen-Flash, and Alibaba Function Compute.",
       "target_sec": 11,
