@@ -21,6 +21,22 @@ to re-ground **before the action commits** — and when policy forbids auto-acti
 (e.g. outside the refund window) the agent **escalates to a human** instead. Every
 decision lands in a tamper-evident, hash-chained audit log.
 
+### What one fabrication costs
+A fabricated *"refund issued / replacement shipped"* is a direct cash loss plus a
+compliance event. A first-order exposure model — every input is a knob you can turn:
+
+```
+monthly exposure ≈ monthly tickets × share touching money × fabrication rate × avg refund
+```
+
+*Illustrative:* 50,000 tickets/mo × 10% refund/replacement × 1% fabricated × $79 avg
+refund (our demo order) ≈ **$3,950/mo** in phantom payouts — before re-contact cost,
+chargebacks, or the compliance event. And the legal floor is already set: in
+[*Moffatt v. Air Canada*, 2024 BCCRT 149](https://www.canlii.org/en/bc/bccrt/doc/2024/2024bccrt149/2024bccrt149.html)
+a tribunal held the airline liable for **one fabricated support answer** — its chatbot
+invented a refund policy — awarding the customer ~CAD $812 and ruling that a company
+owns what its agent says. (Illustrative model; the only hard number here is the case.)
+
 ### Why this isn't "just a guardrail"
 A guardrail scores how *confident* the model sounds and filters on a threshold.
 ReceiptGuard demands **cryptographic proof that each tool actually ran**: claims
@@ -135,7 +151,7 @@ endpoint. No key → mock mode, everything still runs.
 |---|---|
 | **Innovation 30%** (tiebreaker) | the *composition*, not the primitive: receipts + epistemic claim-typing + GSAR tiered recovery + auto-act/escalate policy gate + audit ledger, served over MCP; `reasoning_content` as audit artifact; two-speed qwen-flash/qwen3.7-max fleet under a `thinking_budget` |
 | **Technical Depth 30%** | deterministic verifier (no LLM in the hot path), modular adapters, hash-chained ledger, reproducible benchmark + ablations |
-| **Problem Value 25%** | fabricated tool results are the #1 blocker to autonomous agents — one hallucinated "refund issued / replacement shipped" is a direct cash loss + a compliance event, multiplied across support volume; ReceiptGuard is a drop-in MCP gateway any Qwen agent installs |
+| **Problem Value 25%** | fabricated tool results are the #1 blocker to autonomous agents; a first-order model puts a 1% fabrication rate at **~$4k/mo** in phantom refunds ([dollar model above](#what-one-fabrication-costs)), and *Moffatt v. Air Canada* (2024 BCCRT 149) already made a company pay for one fabricated support answer; ReceiptGuard is a drop-in MCP gateway any Qwen agent installs |
 | **Presentation 15%** | live split-screen demo: watch the agent get caught lying and self-correct, on the record |
 
 ## Benchmark

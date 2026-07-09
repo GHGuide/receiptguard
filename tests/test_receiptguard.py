@@ -186,6 +186,45 @@ def test_r28_numeric_edge_cases():
     assert _numbers("delivered 2024-01-15") == set()  # date still not an amount
 
 
+def _load_benchmark():
+    import importlib.util
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location("rg_benchmark", root / "eval" / "benchmark.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_r16_r17_r18_benchmark_provenance_strata_and_ci():
+    """R16 provenance + R17 stratified by_type + R18 Wilson CIs in every results file.
+    (Runs offline/mock; DASHSCOPE_API_KEY is unset in the test env.)"""
+    bench = _load_benchmark()
+    res = bench.run(8)  # 2 per stratum
+    # R16: provenance metadata present and self-describing
+    assert {"n", "mode", "judge_model", "temperature", "timestamp_utc",
+            "case_generator_version"} <= res.keys()
+    assert res["mode"] in ("mock", "live") and res["case_generator_version"] >= 1
+    # R17: the once-empty by_type is populated with balanced strata
+    assert res["by_type"] == {"clean": 2, "fabricated_ref": 2,
+                              "value_mismatch": 2, "false_absence": 2}
+    # R18: a Wilson 95% CI brackets every reported rate, low <= point <= high, within [0,1]
+    for s in res["systems"].values():
+        lo, hi = s["detection_ci95"]
+        assert 0.0 <= lo <= s["detection_rate"] <= hi <= 1.0
+        flo, fhi = s["fp_ci95"]
+        assert 0.0 <= flo <= s["false_positive_rate"] <= fhi <= 1.0
+
+
+def test_r18_wilson_ci_known_values():
+    """R18: Wilson helper matches textbook values at the extremes this benchmark lives in."""
+    bench = _load_benchmark()
+    assert bench._wilson(0, 0) == [0.0, 0.0]
+    lo, hi = bench._wilson(150, 150)     # perfect detection at the headline n
+    assert lo == 0.975 and hi == 1.0     # 100% [97.5, 100.0]
+    lo0, hi0 = bench._wilson(0, 150)     # a receipt-free judge that catches nothing
+    assert lo0 == 0.0 and 0.0 < hi0 < 0.03
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     passed = 0

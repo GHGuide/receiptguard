@@ -7,7 +7,7 @@
 ---
 
 ## Inspiration
-The #1 reason autonomous agents don't ship in production isn't that they retrieve the wrong fact — it's that they **confidently report tool results that never happened**: "refund issued," "8 units in stock, replacement shipped," "email sent" — when the tool was never called or returned something else. One hallucinated refund is a direct cash loss and a compliance event, multiplied across support volume. Everyone checks whether the agent *retrieved* the right thing; nobody checks what it *claims its tools did*.
+The #1 reason autonomous agents don't ship in production isn't that they retrieve the wrong fact — it's that they **confidently report tool results that never happened**: "refund issued," "8 units in stock, replacement shipped," "email sent" — when the tool was never called or returned something else. One hallucinated refund is a direct cash loss and a compliance event, multiplied across support volume. A first-order model — monthly tickets × share touching money × fabrication rate × avg refund — puts a 1% fabrication rate on 50k tickets/mo at **~$4k/mo** in phantom payouts (illustrative). And this is already case law: in *Moffatt v. Air Canada* (2024 BCCRT 149) a tribunal made the airline pay ~CAD $812 for a single fabricated support answer its chatbot gave — ruling the company owns what its agent says. Everyone checks whether the agent *retrieved* the right thing; nobody checks what it *claims its tools did*.
 
 ## What it does
 ReceiptGuard is a `qwen3.7-max` autopilot that resolves customer-support tickets (refunds, warranty replacements) end-to-end, wrapped in a verification layer that makes fabrication **structurally impossible**:

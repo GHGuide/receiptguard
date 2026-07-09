@@ -26,4 +26,4 @@ The agent must be the star, acting and getting caught, within the first 15 secon
 3. **Make the Alibaba deploy a dated, clickable artifact** — live `*.fcapp.run` URL + ledger screenshot + the exact `s deploy` command.
 4. **Foreground the MCP server** with a "connect this to your MCP client" snippet — Innovation literally names "MCP integrations."
 5. **Frame the dual-Qwen split as a decision:** "we spend a fast cheap model (qwen-flash) to make the expensive one (qwen3-max) honest." Stack-sophistication, not two API calls.
-6. **Dollar-stakes line** in Problem Value: cost of one hallucinated refund × support volume.
+6. **Dollar-stakes line** (say it in 2:20–2:45 or over the end card): *"At 50k tickets a month, a 1% fabrication rate on refund claims is ~$4k a month in phantom refunds — and Air Canada already got billed by a tribunal for one answer its bot made up."* (Precedent: *Moffatt v. Air Canada*, 2024 BCCRT 149 — a company held liable ~CAD $812 for one fabricated support answer. The $4k is an illustrative model; the case is the hard fact.)
